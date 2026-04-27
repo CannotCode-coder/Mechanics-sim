@@ -1,0 +1,1274 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Statics/Mechanics Demo 1 — Block with a Single Force (F = ma)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33;
+      --panel2:#0f1630;
+      --text:#e9eeff;
+      --muted:#aab6ff;
+      --accent:#78ffd6;
+      --warn:#ffcf5a;
+      --danger:#ff5f6d;
+      --ok:#7CFF7A;
+      --line:rgba(255,255,255,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1000px 700px at 20% 10%, rgba(120,255,214,.10), transparent 55%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(170,182,255,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items: safe center;
+      justify-content:center;
+      padding:18px;
+    }
+    .wrap{
+      width:min(1100px, 100%);
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;
+      padding:14px 16px;
+      font-size:16px;
+      letter-spacing:.2px;
+      background: rgba(255,255,255,.03);
+      border-bottom:1px solid var(--line);
+    }
+    .card .content{ padding:14px 16px; }
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:10px 0 6px;
+    }
+    input[type="number"], input[type="range"]{
+      width:100%;
+    }
+    input[type="number"]{
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:10px;
+      padding:10px 10px;
+      font-family:var(--mono);
+      outline:none;
+    }
+    input[type="number"]:focus{
+      border-color: rgba(120,255,214,.55);
+      box-shadow:0 0 0 3px rgba(120,255,214,.12);
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .row > * { flex:1; }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+    button{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      letter-spacing:.2px;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{ background: rgba(255,255,255,.08); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      border-color: rgba(120,255,214,.35);
+      background: rgba(120,255,214,.10);
+    }
+    button.danger{
+      border-color: rgba(255,95,109,.40);
+      background: rgba(255,95,109,.10);
+    }
+    .kv{
+      margin-top:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .kv .k{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      font-family:var(--mono);
+      font-size:12px;
+      background: rgba(255,255,255,.02);
+    }
+    .kv .k:first-child{ border-top:none; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      font-size:12px;
+      color:var(--muted);
+      margin-top:10px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--warn);
+      box-shadow:0 0 0 4px rgba(255,207,90,.12);
+    }
+    .dot.ok{
+      background: var(--ok);
+      box-shadow:0 0 0 4px rgba(124,255,122,.12);
+    }
+    .dot.danger{
+      background: var(--danger);
+      box-shadow:0 0 0 4px rgba(255,95,109,.12);
+    }
+    .math{
+      margin-top:12px;
+      padding:10px 12px;
+      border:1px dashed rgba(170,182,255,.35);
+      border-radius:12px;
+      background: rgba(15,22,48,.65);
+      font-family:var(--mono);
+      font-size:12px;
+      line-height:1.45;
+      color:var(--text);
+      white-space:pre-wrap;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+      margin-top:10px;
+    }
+    .canvasWrap{
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:520px;
+    }
+    canvas{ width:100%; height:100%; display:block; position:relative; z-index:1; }
+    .overlay{
+      position:absolute;
+      left:12px;
+      top:12px;
+      right:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .pill{
+      pointer-events:none;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.28);
+      border-radius:999px;
+      padding:8px 10px;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--text);
+      backdrop-filter: blur(8px);
+    }
+    .toast{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:18px;
+      max-width:min(720px, calc(100% - 30px));
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.55);
+      border-radius:14px;
+      padding:12px 14px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(8px);
+      display:none;
+      color:var(--text);
+    }
+    .toast.show{ display:block; }
+    .toast strong{ color:var(--warn); }
+    a{ color: var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+  
+    /* Click feedback: green edge-flash vignette */
+    .edgeFlash{
+      z-index: 3;
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity 40ms linear;
+      /* Vignette: edges glow */
+      background:
+        radial-gradient(closest-side at 50% 50%, rgba(0,0,0,0) 55%, rgba(124,255,122,.0) 60%, rgba(124,255,122,.55) 100%);
+      mix-blend-mode: screen;
+      filter: blur(1px);
+    }
+
+    /* Toast readability */
+    .toast{
+      font-size:14px;
+      line-height:1.35;
+    }
+    .toast.ok{
+      font-size:16px;
+      border-color: rgba(124,255,122,.45) !important;
+    }
+    .toast.ok strong{ color: var(--ok); }
+
+
+  /* Force programme UI */
+  .prog { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .progStep {
+    display:grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap:10px;
+    align-items:end;
+    padding:10px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:14px;
+    background: rgba(255,255,255,.03);
+  }
+  .progStep .miniLabel { font-size:12px; color: rgba(233,238,255,.72); margin-bottom:6px; }
+  .progStep input { width:100%; }
+  .progStep .remove {
+    height:38px;
+    border-radius:12px;
+    border:1px solid rgba(255,95,109,.35);
+    background: rgba(255,95,109,.10);
+    color: rgba(233,238,255,.92);
+    cursor:pointer;
+  }
+  .progHelp, .progHint { font-size:12px; color: rgba(233,238,255,.70); margin-top:6px; }
+  .progRowBtns { display:flex; gap:10px; margin-top:10px; }
+  .progActive { outline: 2px solid rgba(120,255,214,.40); box-shadow: 0 0 0 4px rgba(120,255,214,.10); }
+
+
+  .fixedValue{
+    margin-top:10px;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.04);
+    color: rgba(233,238,255,.92);
+    font-family: var(--mono);
+  }
+  /* Hide legacy UI blocks we don't want */
+  .readouts{ display:none !important; }
+  .field .subhelp, .subhelp{ display:none !important; }
+  /* Hide any leftover target/speed fields by label text wrappers */
+  .hideBlock{ display:none !important; }
+
+  .equations{
+    margin-top:14px;
+    padding:14px 14px;
+    border-radius:14px;
+    border:1px dashed rgba(170,182,255,.35);
+    background: rgba(10,18,36,.35);
+    color: rgba(233,238,255,.92);
+  }
+  .equations .eq{ font-family: var(--mono); font-size: 15px; }
+  .equations .eqExplain{ margin-top:6px; font-size:12px; color: rgba(233,238,255,.75); line-height:1.35; }
+  .goalsPanel{
+    position:absolute;
+    right:16px;
+    top:76px;
+    width:320px;
+    max-width:calc(100% - 32px);
+    padding:14px 14px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.35);
+    box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    color: rgba(233,238,255,.92);
+    pointer-events:none;
+  }
+  .goalsPanel h3{ margin:0 0 8px 0; font-size:14px; letter-spacing:.2px; color: rgba(233,238,255,.95); }
+  .goalsPanel ol{ margin:0; padding-left:18px; color: rgba(233,238,255,.82); font-size:12.5px; line-height:1.45; }
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>Controls</h2>
+      <div class="content">
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.1px;">Landmarks</div>
+          <div style="border:1px solid var(--line); border-radius:12px; overflow:hidden; font-family:var(--mono); font-size:12px;">
+            <div style="display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 12px; background:rgba(255,255,255,.02); border-bottom:1px solid var(--line);">
+              <span>🤖 Robot</span><span style="color:var(--accent);">-2 250 m</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 12px; background:rgba(255,255,255,.02); border-bottom:1px solid var(--line);">
+              <span>🔺 Pyramid</span><span style="color:var(--accent);">-750 m</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 12px; background:rgba(255,255,255,.02); border-bottom:1px solid var(--line);">
+              <span>🗼 Eiffel Tower</span><span style="color:var(--accent);">500 m</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr auto; gap:8px; padding:8px 12px; background:rgba(255,255,255,.02);">
+              <span>🪐 Saturn</span><span style="color:var(--accent);">1 000 m</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="field full">
+          <label for="forceProg">Force programme (piecewise constant)</label>
+          <div class="progHelp">Enter a force and how long it acts. Add multiple steps to build a motion plan.</div>
+          <div id="forceProg" class="prog"></div>
+          <div class="progRowBtns">
+            <button id="addStep" class="btn secondary" type="button">Add step</button>
+            <button id="clearSteps" class="btn secondary" type="button">Clear</button>
+          </div>
+          <div class="progHint">Example: 30000 N for 5 s, then -30000 N for 5 s.</div>
+        </div>
+        <input id="forceN" type="hidden" value="0">
+        <input id="targetA" type="hidden" value="0">
+        <input id="speedLimit" type="hidden" value="2000">
+          </div>
+        </div>
+
+        <div class="fixedValue">Mass of car, m = <strong>2 000 kg</strong></div>
+
+        <div class="btnrow">
+          <button class="primary" id="playPause">Pause</button>
+          <button id="reset">Reset</button>
+          <button id="evaporateNow" style="display:none" type="button">Evaporate</button>
+        </div>
+
+        <div class="badge" id="statusBadge"><span class="dot" id="statusDot"></span><span id="statusText">Running</span></div>
+
+        <div class="equations">
+          <div class="eq">Newton's Second Law</div>
+          <div class="eqExplain">A net force F acting on a mass m produces a constant acceleration for that step:</div>
+          <div class="eq" style="margin-top:6px;">a = F / m</div>
+
+          <div class="eqExplain" style="margin-top:8px;">Because a is constant within each step, the SUVAT displacement equation applies directly:</div>
+          <div class="eq" style="margin-top:6px;">x = x₀ + u·t + ½·a·t²</div>
+          <div class="eqExplain" style="margin-top:6px;">Here u is the velocity at the start of the step and t is the time elapsed within it. Each step passes its final velocity to the next as the new u.</div>
+
+          <div class="eqExplain" style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(170,182,255,.2);">
+            Now pick a landmark (or multiple) to visit. Determine the distance you want to move and substitute acceleration using the mass and force expression above. Decide how fast you want to get there and calculate the force required. Note that you will probably want to move half the distance under one force, then apply an equal and opposite force to decelerate for the second half.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvasWrap card" style="padding:0;">
+      <div class="overlay">
+        <div class="pill" id="pillTime">t = 0.00 s</div>
+        <div class="pill" id="pillA">a = 0.000 m/s²</div>
+        <div class="pill" id="pillV">v = 0.000 m/s</div>
+        <div class="pill" id="pillX">x = 0.000 m</div>
+      </div>
+      <canvas id="c"></canvas>
+      <div class="edgeFlash" id="edgeFlash"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  // HiDPI
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(r.width * dpr);
+    canvas.height = Math.floor(r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+
+  // Controls
+  const forceN = document.getElementById('forceN');
+  const MASS_KG = 2000; // fixed car mass (kg)
+  const targetA = document.getElementById('targetA');
+  const speedLimit = document.getElementById('speedLimit');
+  const playPause = document.getElementById('playPause');
+  const resetBtn = document.getElementById('reset');
+  const evaporateNow = document.getElementById('evaporateNow');
+
+  // Force programme UI
+  const forceProg = document.getElementById('forceProg');
+  const addStepBtn = document.getElementById('addStep');
+  const clearStepsBtn = document.getElementById('clearSteps');
+
+  // Programme steps: [{F: number (N), dt: number (s)}]
+  let steps = [{ F: 0, dt: 5 }];
+  let stepIndex = 0;
+  let stepTimeRemaining = steps[0].dt;
+
+  function sanitiseStep(s){
+    const F = Number(s.F);
+    const dt = Number(s.dt);
+    return {
+      F: Number.isFinite(F) ? F : 0,
+      dt: Number.isFinite(dt) ? Math.max(0, dt) : 0
+    };
+  }
+
+  function readStepsFromUI(){
+    const inputs = forceProg.querySelectorAll('input[data-kind]');
+    inputs.forEach(inp => {
+      const i = Number(inp.dataset.i);
+      const kind = inp.dataset.kind;
+      if(!Number.isFinite(i) || !steps[i]) return;
+      steps[i][kind] = Number(inp.value);
+    });
+    steps = steps.map(sanitiseStep);
+  }
+
+  function trimTrailingEmpty(){
+    while(steps.length > 1){
+      const last = steps[steps.length - 1];
+      if(Math.abs(last.F) < 1e-12 && (last.dt === 0)) steps.pop();
+      else break;
+    }
+  }
+
+  function renderSteps(){
+    // Preserve focus so typing into a field isn't interrupted when a new step cascades in
+    const activeEl = document.activeElement;
+    let focusKind = null, focusI = null, selStart = null, selEnd = null;
+    if(activeEl && activeEl.dataset && activeEl.dataset.kind !== undefined){
+      focusKind = activeEl.dataset.kind;
+      focusI    = activeEl.dataset.i;
+      try { selStart = activeEl.selectionStart; selEnd = activeEl.selectionEnd; } catch(e){}
+    }
+
+    forceProg.innerHTML = '';
+    steps.forEach((s, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'progStep' + (i === stepIndex && running && !evaporated ? ' progActive' : '');
+
+      const fBox = document.createElement('div');
+      fBox.innerHTML = `<div class="miniLabel">Force F (N)</div>
+        <input type="number" step="any" value="${s.F}" data-kind="F" data-i="${i}">`;
+
+      const tBox = document.createElement('div');
+      tBox.innerHTML = `<div class="miniLabel">Time Δt (s)</div>
+        <input type="number" step="any" min="0" value="${s.dt}" data-kind="dt" data-i="${i}">`;
+
+      const rm = document.createElement('button');
+      rm.className = 'remove';
+      rm.type = 'button';
+      rm.textContent = 'Remove';
+      rm.disabled = steps.length <= 1;
+      rm.addEventListener('click', () => {
+        if(steps.length <= 1) return;
+        steps.splice(i, 1);
+        if(stepIndex >= steps.length) stepIndex = steps.length - 1;
+        stepTimeRemaining = Math.min(stepTimeRemaining, steps[stepIndex].dt || 0);
+        renderSteps();
+      });
+
+      wrap.appendChild(fBox);
+      wrap.appendChild(tBox);
+      wrap.appendChild(rm);
+      forceProg.appendChild(wrap);
+    });
+
+    // Restore focus + caret to whichever input was active before the rebuild
+    if(focusKind !== null){
+      const toFocus = forceProg.querySelector(
+        `input[data-kind="${focusKind}"][data-i="${focusI}"]`
+      );
+      if(toFocus){
+        toFocus.focus();
+        // type="number" doesn't support setSelectionRange; swap to text momentarily
+        try {
+          toFocus.type = 'text';
+          const end = toFocus.value.length;
+          toFocus.setSelectionRange(end, end);
+          toFocus.type = 'number';
+        } catch(e){}
+      }
+    }
+  }
+
+  function cascadeIfNeeded(maxSteps=5){
+    // If the active field has unparseable content (e.g. just "-"), badInput is true.
+    // Don't rebuild the DOM in that case — it would drop the partial value.
+    const active = document.activeElement;
+    if(active && active.validity && active.validity.badInput) return;
+
+    readStepsFromUI();
+    if(steps.length >= maxSteps) return;
+    const last = steps[steps.length - 1];
+    const hasData = (Math.abs(last.F) > 1e-12) || (last.dt > 0);
+    if(hasData){
+      steps.push({ F: 0, dt: 0 });
+      renderSteps();
+    }
+  }
+
+  function resetProgrammePlayback(){
+    readStepsFromUI();
+    trimTrailingEmpty();
+    stepIndex = 0;
+    stepTimeRemaining = steps[0]?.dt ?? 0;
+    forceN.value = String(steps[0]?.F ?? 0);
+    renderSteps();
+  }
+
+  addStepBtn?.addEventListener('click', () => {
+    readStepsFromUI();
+    if(steps.length >= 5){
+      showToast('Maximum of 5 steps reached (for now).', 'warn');
+      return;
+    }
+    steps.push({ F: 0, dt: 0 });
+    renderSteps();
+  });
+
+  clearStepsBtn?.addEventListener('click', () => {
+    steps = [{ F: 0, dt: 5 }];
+    resetProgrammePlayback();
+    showToast('Force programme cleared.', 'ok');
+  });
+
+  forceProg?.addEventListener('input', () => {
+    cascadeIfNeeded(5);
+  });
+
+
+  // Outputs
+  const pillTime = document.getElementById('pillTime');
+  const pillA = document.getElementById('pillA');
+  const pillV = document.getElementById('pillV');
+  const pillX = document.getElementById('pillX');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const toast = document.getElementById('toast');
+
+  // Simulation state
+  let running = false;
+  let evaporated = false;
+  let fatalErrorShown = false;
+  let t = 0;
+  let x = 0;   // metres
+  let v = 0;   // m/s
+
+  // Camera (world metres) — follows the block so it doesn't fly off-screen
+  let camX = 0;
+
+  // World parameters
+  const worldScale = 60; // px per metre (visual only)
+  const arrowMaxPx = 220;
+
+  // Helper: turn a multi-line template string into an array of lines
+  function ASCII(s) {
+    return s.replace(/\r/g, '').trimEnd().split('\n');
+  }
+
+  // Pre-parse car ASCII once (avoid re-parsing every frame)
+  const carLines = ASCII(String.raw`
+                  _________________
+              _.-'_____  _________ _\`.
+            .\` ,'      ||         | \`.\`.
+          .\` ,'        ||         |   \`.\`.
+        .\`  /          ||         |  ,' ] \`....___
+      _\`__.'''''''''''''''''''''''\`''''''''|..___ \`-.._
+    .'                  [='                '     \`'-.._\`.
+ ,:/.'''''''''''''''''''|''''''''''''''''''|'''''''''''\'\
+  //||    _..._         |                  '    _..._  |)|
+ /|//   ,',---.\`.       |                  |  .',---.\`.\>|
+(':/   //' .-. \`\\      \_________________/  '/' .-. \`\\|_)
+ \`-...'||  '-'  ||________,,,,,,,,,,,,,,,__.'||  '-'  ||-'
+       '.'.___.','                           '.'.___.','
+         '-.m.-'      
+    `);
+  const carLineH = 14;
+  const carH = carLines.length * carLineH;
+
+  // ASCII landmarks (world coordinates in metres)
+  const landmarks = [
+    {
+      x: -2250, // metres
+      name: 'Robot (ASCII)',
+      scale: 2,
+      art: ASCII(String.raw`
+           _____
+          |     |
+          | | | |
+          |_____|
+    ____ ___|_|___ ____
+   ()___)         ()___)
+   // /|           |\ \\
+  // / |           | \ \\
+ (___) |___________| (___)
+ (___)   (_______)   (___)
+ (___)     (___)     (___)
+ (___)      |_|      (___)
+ (___)  ___/___\___   | |
+  | |  |           |  | |
+  | |  |___________| /___\
+ /___\  |||     ||| //   \\
+//   \\ |||     ||| \\   //
+\\   // |||     |||  \\ //
+ \\ // ()__)   (__()
+       ///       \\\
+      ///         \\\
+    _///___     ___\\\_
+   |_______|   |_______|
+      
+      `)
+    },
+    {
+      x: 500, // metres
+      name: 'Eiffel Tower (ASCII)',
+      art: ASCII(String.raw`
+    		|
+                |
+                A
+              _/X\_
+              \/X\/
+               |V|
+               |A|
+               |V|
+              /XXX\
+              |\/\|
+              |/\/|
+              |\/\|
+              |/\/|
+              |\/\|
+              |/\/|
+             IIIIIII
+             |\/_\/|
+            /\// \\/\
+            |/|   |\|
+           /\X/___\X/\
+          IIIIIIIIIIIII
+         /\`-\/XXXXX\/-\`\
+       /\`.-'/\|/I\|/\'-.\`\
+      /\`\-/_.-"\` \`"-._ \-/\
+     /.-'.'           '.'-.\
+    /\`\-/               \-/\`\
+ _/\`-'/\`_               _\`\'-\`\_
+\`"""""""\`                \`""""""\`
+      `)
+    },
+    {
+      x: 1000, // metres
+      name: 'Saturn (ASCII)',
+      art: ASCII(String.raw`
+                                                                    ..;===+.
+                                                                .:=iiiiii=+=
+                                                             .=i))=;::+)i=+,
+                                                          ,=i);)I)))I):=i=;
+                                                       .=i==))))ii)))I:i++
+                                                     +)+))iiiiiiii))I=i+:'
+                                .,:;;++++++;:,.       )iii+:::;iii))+i='
+                             .:;++=iiiiiiiiii=++;.    =::,,,:::=i));=+'
+                           ,;+==ii)))))))))))ii==+;,      ,,,:=i))+=:
+                         ,;+=ii))))))IIIIII))))ii===;.    ,,:=i)=i+
+                        ;+=ii)))IIIIITIIIIII))))iiii=+,   ,:=));=,
+                      ,+=i))IIIIIITTTTTITIIIIII)))I)i=+,,:+i)=i+
+                     ,+i))IIIIIITTTTTTTTTTTTI))IIII))i=::i))i='
+                    ,=i))IIIIITLLTTTTTTTTTTIITTTTIII)+;+i)+i\`
+                    =i))IIITTLTLTTTTTTTTTIITTLLTTTII+:i)ii:'
+                   +i))IITTTLLLTTTTTTTTTTTTLLLTTTT+:i)))=,
+                   =))ITTTTTTTTTTTLTTTTTTLLLLLLTi:=)IIiii;
+                  .i)IIITTTTTTTTLTTTITLLLLLLLT);=)I)))))i;
+                  :))IIITTTTTLTTTTTTLLHLLLLL);=)II)IIIIi=:
+                  :i)IIITTTTTTTTTLLLHLLHLL)+=)II)ITTTI)i=
+                  .i)IIITTTTITTLLLHHLLLL);=)II)ITTTTII)i+
+                  =i)IIIIIITTLLLLLLHLL=:i)II)TTTTTTIII)i'
+                +i)i)))IITTLLLLLLLLT=:i)II)TTTTLTTIII)i;
+              +ii)i:)IITTLLTLLLLT=;+i)I)ITTTTLTTTII))i;
+             =;)i=:,=)ITTTTLTTI=:i))I)TTTLLLTTTTTII)i;
+           +i)ii::,  +)IIITI+:+i)I))TTTTLLTTTTTII))=,
+         :=;)i=:,,    ,i++::i))I)ITTTTTTTTTTIIII)=+'
+       .+ii)i=::,,   ,,::=i)))iIITTTTTTTTIIIII)=+
+      ,==)ii=;:,,,,:::=ii)i)iIIIITIIITIIII))i+:'
+     +=:))i==;:::;=iii)+)=  \`:i)))IIIII)ii+'
+   .+=:))iiiiiiii)))+ii;
+  .+=;))iiiiii)));ii+
+ .+=i:)))))))=+ii+
+.;==i+::::=)i=;
+,+==iiiiii+,
+\`+=+++;\`
+      `)
+    },
+    {
+      x: -750, // metres
+      name: 'Pyramid (ASCII)',
+      scale: 2.5,
+      art: ASCII(String.raw`
+               .
+              /=\
+             /===\ \
+            /=====\' \
+           /=======\'' \
+          /=========\ ' '\
+         /===========\''   \
+        /=============\ ' '  \
+       /===============\   ''  \
+      /=================\' ' ' ' \
+     /===================\' ' '  ' \
+    /=====================\' '   ' ' \
+   /=======================\  '   ' /
+  /=========================\   ' /
+ /===========================\'  /
+/=============================\/
+      `)
+    }
+  ];
+
+
+
+  function drawAsciiLandmarks(W, gy){
+    ctx.save();
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillStyle = 'rgba(233,238,255,.78)';
+    ctx.textBaseline = 'top';
+
+    // Place towers slightly above the ground line
+    const baseY = gy - 18;
+
+    for(const lm of landmarks){
+      // Convert world x to screen x using camera
+      const sx = (W * 0.5) + (lm.x - camX) * worldScale;
+
+      // If it's far off-screen, skip drawing (perf)
+      const approxWidthPx = 260; // rough
+      if(sx < -approxWidthPx || sx > W + approxWidthPx) continue;
+
+      // Draw a subtle marker line at the landmark position
+      ctx.strokeStyle = 'rgba(124,255,122,.22)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx, gy - 14);
+      ctx.lineTo(sx, gy + 14);
+      ctx.stroke();
+
+      // Draw label
+      ctx.fillStyle = 'rgba(124,255,122,.85)';
+      ctx.fillText(`${lm.name} @ ${lm.x} m`, sx + 10, gy + 18);
+
+      // Draw ASCII art (anchored bottom-ish at baseY)
+      ctx.fillStyle = 'rgba(233,238,255,.80)';
+      const scale = lm.scale ?? 1;
+      const fontSize = Math.round(12 * scale);
+      const lineH = 12.5 * scale;
+      ctx.font = `${fontSize}px ` + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+      const artH = lm.art.length * lineH;
+      const topY = baseY - artH;
+
+      for(let i=0;i<lm.art.length;i++){
+        ctx.fillText(lm.art[i], sx + 10, topY + i * lineH);
+      }
+      // Restore base font for next landmark
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    }
+    ctx.restore();
+  }
+
+
+  const groundY = () => canvas.getBoundingClientRect().height * 0.58;
+
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function fmt(n){ return (Math.round(n * 1000) / 1000).toFixed(3); }
+
+  
+  const edgeFlash = document.getElementById('edgeFlash');
+  let edgeFlashIntensity = 0; // 0..1
+  let clickLatched = false; // prevent repeated firing while staying on-target
+
+  function triggerEdgeFlash(intensity=1){
+    edgeFlashIntensity = Math.max(edgeFlashIntensity, intensity);
+    // immediate visual response
+    edgeFlash.style.opacity = String(clamp(edgeFlashIntensity, 0, 1));
+  }
+
+  function showToast(msg, kind='warn'){
+    toast.innerHTML = msg;
+    toast.classList.add('show');
+    toast.classList.remove('ok');
+
+    if(kind === 'danger'){
+      toast.style.borderColor = 'rgba(255,95,109,.45)';
+    } else if(kind === 'ok'){
+      toast.style.borderColor = 'rgba(124,255,122,.35)';
+      toast.classList.add('ok');
+          } else {
+      toast.style.borderColor = 'rgba(255,207,90,.35)';
+    }
+
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 2300);
+  }
+
+
+  function updateBadge(state){
+    statusDot.classList.remove('ok','danger');
+    if(state === 'running'){
+      statusDot.style.background = 'var(--warn)';
+      statusText.textContent = 'Running';
+    } else if(state === 'paused'){
+      statusDot.style.background = 'var(--muted)';
+      statusText.textContent = 'Paused';
+    } else if(state === 'evaporated'){
+      statusDot.classList.add('danger');
+      statusText.textContent = 'Evaporated (simulation stopped)';
+    }
+  }
+
+  function reset(){
+    t = 0; x = 0; v = 0;
+    camX = 0;
+    evaporated = false;
+    running = false;
+    playPause.textContent = 'Play';
+    updateBadge('paused');
+    resetProgrammePlayback();
+    showToast('Reset.', 'ok');
+  }
+
+  function evaporate(reason){
+    evaporated = true;
+    running = false;
+    playPause.textContent = 'Play';
+    updateBadge('evaporated');
+    const msg = reason || 'The block has now evaporated because of high heat from air resistance!';
+    showToast(`<strong>Evaporated:</strong> ${msg}`, 'danger');
+  }
+
+  function parseNumber(el, fallback){
+    const n = Number(el.value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function drawArrow(x0, y0, x1, y1, width=4){
+    const dx = x1-x0, dy = y1-y0;
+    const L = Math.hypot(dx,dy);
+    if(L < 1) return;
+    const ux = dx/L, uy = dy/L;
+    const head = clamp(L*0.18, 10, 22);
+    const hx = x1 - ux*head;
+    const hy = y1 - uy*head;
+    const nx = -uy, ny = ux;
+
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(hx,hy);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(hx + nx*head*0.55, hy + ny*head*0.55);
+    ctx.lineTo(hx - nx*head*0.55, hy - ny*head*0.55);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function step(dt){
+    // Sub-step at programme boundaries so force transitions are exact.
+    // Without this, a step with 2 ms left but dt=16 ms applies the old
+    // force for the full 16 ms before transitioning — causing residual
+    // velocity proportional to a * dt (significant at high forces).
+    const m = MASS_KG;
+    let timeLeft = dt;
+
+    let a = 0; // hoisted so post-loop code (pills, evaporation) can read it
+
+    while(timeLeft > 1e-9){
+      const F = parseNumber(forceN, 0);
+      a = F / m;
+
+      const onLastStep = (steps.length === 0 || stepIndex >= steps.length - 1);
+
+      // Clamp subDt to the remaining step time for ALL steps, including the last.
+      // Without this, the last step applies a full frame of force even when only
+      // a fraction of the frame remains in the step — causing residual velocity
+      // proportional to a * frame_overshoot (~0.2 m/s at high forces).
+      let subDt;
+      if(stepTimeRemaining > 1e-9){
+        subDt = Math.min(timeLeft, stepTimeRemaining);
+      } else {
+        // Step already exhausted — integrate remainder at current force (0 after last step)
+        subDt = timeLeft;
+      }
+
+      // Symplectic Euler for this sub-interval
+      v += a * subDt;
+      x += v * subDt;
+      t += subDt;
+      timeLeft -= subDt;
+
+      // Advance programme
+      if(steps.length > 0 && stepTimeRemaining > 0){
+        stepTimeRemaining -= subDt;
+        if(stepTimeRemaining <= 1e-9){
+          if(!onLastStep){
+            stepIndex++;
+            stepTimeRemaining = steps[stepIndex].dt ?? 0;
+            forceN.value = String(steps[stepIndex].F ?? 0);
+          } else {
+            forceN.value = '0';
+            stepTimeRemaining = 0;
+          }
+        }
+      }
+    }
+
+    // Evaporation if too fast
+    const vlim = Math.max(0.1, Math.abs(parseNumber(speedLimit, 28)));
+    if(Math.abs(v) >= vlim){
+      evaporate('The block exceeded the speed limit.');
+    }
+
+    // Target check (optional)
+    const atgt = parseNumber(targetA, 0);
+    if(!evaporated && Math.abs(atgt) > 1e-12){
+      const ok = Math.abs(a - atgt) <= 0.001; // within 3 d.p.
+      if(ok && !clickLatched){
+        clickLatched = true;
+        triggerEdgeFlash(1);
+        showToast(`<strong>CLICK!</strong> Target matched: a = ${fmt(a)} m/s²`, 'ok');
+      }
+      if(!ok){
+        clickLatched = false;
+      }
+    } else {
+      clickLatched = false;
+    }
+
+    // Outputs
+    pillTime.textContent = `t = ${t.toFixed(2)} s`;
+    pillA.textContent = `a = ${fmt(a)} m/s²`;
+    pillV.textContent = `v = ${fmt(v)} m/s`;
+    pillX.textContent = `x = ${fmt(x)} m`;
+
+    // Camera: hard lock to the body (no smoothing)
+    // View is always centred on the block for maximum clarity
+    camX = x;
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    r = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  function drawBackgroundGrid(W, H){
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1;
+
+    const grid = 40; // px
+    // Offset grid by camera so it appears stationary in world space
+    const camPx = camX * worldScale;
+    const xOffset = ((-camPx) % grid + grid) % grid;
+
+    for(let gx = xOffset; gx < W; gx += grid){
+      ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke();
+    }
+    for(let gy = 0; gy < H; gy += grid){
+      ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawXAxis(W, gy){
+    // Main axis line
+    ctx.save();
+    ctx.strokeStyle = 'rgba(170,182,255,.38)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+
+    // Tick spacing: choose a "nice" tick step so labels don't clutter.
+    // We aim for ~90px between ticks.
+    const targetPx = 90;
+    const rawMetres = targetPx / worldScale;
+    const nice = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+    let tickM = nice[nice.length-1];
+    for(const v of nice){ if(v >= rawMetres){ tickM = v; break; } }
+    // Keep ticks reasonably fine so motion is visible at small displacements
+    if (tickM < 1) tickM = 1;
+
+    const pxPerTick = tickM * worldScale;
+
+    // World coordinate at screen x=0 and x=W
+    const worldLeft = camX - (W/2)/worldScale;
+    const worldRight = camX + (W/2)/worldScale;
+
+    // Clamp displayed axis to ±10000 m (your request). This prevents huge label values.
+    const limit = 10000;
+    const L = Math.max(-limit, worldLeft);
+    const R = Math.min(limit, worldRight);
+
+    // Find first tick <= L
+    const firstTick = Math.floor(L / tickM) * tickM;
+
+    ctx.font = '11px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillStyle = 'rgba(233,238,255,.78)';
+    ctx.strokeStyle = 'rgba(170,182,255,.32)';
+    ctx.lineWidth = 1.5;
+
+    for(let tm = firstTick; tm <= R + 1e-9; tm += tickM){
+      const sx = (W/2) + (tm - camX) * worldScale;
+      // Tick mark
+      ctx.beginPath();
+      ctx.moveTo(sx, gy - 7);
+      ctx.lineTo(sx, gy + 7);
+      ctx.stroke();
+
+      // Label (show integers without .0)
+      const label = (Math.abs(tm - Math.round(tm)) < 1e-9) ? `${Math.round(tm)} m` : `${tm} m`;
+      ctx.fillText(label, sx + 3, gy + 20);
+    }
+
+    // 0 label highlight (subtle)
+    if(0 >= L && 0 <= R){
+      const sx0 = (W/2) + (0 - camX) * worldScale;
+      ctx.strokeStyle = 'rgba(120,255,214,.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx0, gy - 12);
+      ctx.lineTo(sx0, gy + 12);
+      ctx.stroke();
+    }
+
+    
+    // Current position marker (camera centre = body position)
+    ctx.save();
+    const sxC = W * 0.5;
+    ctx.strokeStyle = 'rgba(120,255,214,.55)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(sxC, gy - 18);
+    ctx.lineTo(sxC, gy + 18);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(120,255,214,.92)';
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillText(`x = ${fmt(camX)} m`, sxC + 8, gy - 38);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function render(){
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0,0,W,H);
+
+    drawBackgroundGrid(W, H);
+
+    // Ground + x-axis
+    const gy = groundY();
+    drawXAxis(W, gy);
+
+    // Landmarks in world space
+    drawAsciiLandmarks(W, gy);
+
+    // Body screen position (camera is locked to the body, so it's always centred)
+    const blockX = W * 0.5;
+    const blockY = gy - 60;
+
+
+    // Car (ASCII)
+    ctx.save();
+    ctx.font = '13px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillStyle = 'rgba(233,238,255,.90)';
+    ctx.textBaseline = 'top';
+
+    
+    const lineH = carLineH;
+    const carH_local = carH;
+    const carBottomY = gy - 18; // just above the x-axis
+    const carTopY = carBottomY - carH_local;
+
+    for(let i=0;i<carLines.length;i++){
+      ctx.fillText(carLines[i], blockX - 140, carTopY + i * lineH);
+    }
+    ctx.restore();
+
+    // Force arrow
+    const F = parseNumber(forceN, 0);
+    const sign = Math.sign(F) || 1;
+    const mag = Math.abs(F);
+    const arrowLen = clamp(mag * 6, 0, arrowMaxPx);
+    const ax0 = blockX;
+    const ay0 = (gy - 18 - carH) - 18;
+    const ax1 = blockX + sign * arrowLen;
+    const ay1 = ay0;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(120,255,214,.9)';
+    ctx.strokeStyle = 'rgba(120,255,214,.9)';
+    drawArrow(ax0, ay0, ax1, ay1, 5);
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillStyle = 'rgba(233,238,255,.92)';
+    ctx.fillText(`F = ${fmt(F)} N`, ax0 - 44, ay0 - 10);
+    ctx.restore();
+
+    // Velocity indicator
+    ctx.save();
+    ctx.fillStyle = 'rgba(170,182,255,.85)';
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+    ctx.fillText(`v = ${fmt(v)} m/s`, 16, H - 18);
+    ctx.restore();
+
+    // Evaporated state overlay
+    if(evaporated){
+      ctx.save();
+      // Darker dim so text is legible over any background content
+      ctx.fillStyle = 'rgba(0,0,0,.80)';
+      ctx.fillRect(0,0,W,H);
+
+      const sans = getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      const carTopY = gy - 18 - carH;
+      const cx = W / 2;
+
+      // Line 1 — red, bold, 20 px
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '700 20px ' + sans;
+      ctx.fillStyle = 'rgba(255,95,109,.95)';
+      ctx.fillText('Oh no! You went too fast and your car vaporised!', cx, carTopY - 32);
+
+      // Line 2 — white, 14 px
+      ctx.font = '14px ' + sans;
+      ctx.fillStyle = 'rgba(233,238,255,.88)';
+      ctx.fillText('Reset and try again!', cx, carTopY - 8);
+
+      ctx.restore();
+    }
+  }
+
+  // Controls behaviour
+  playPause.addEventListener('click', () => {
+    if(evaporated) return;
+    if(!running){
+      resetProgrammePlayback();
+    }
+    running = !running;
+    playPause.textContent = running ? 'Pause' : 'Play';
+    updateBadge(running ? 'running' : 'paused');
+    renderSteps();
+  });
+
+  resetBtn.addEventListener('click', reset);
+
+  evaporateNow.addEventListener('click', () => {
+    evaporate('Manual override (for demonstration).');
+  });
+
+  // Ensure reasonable numbers
+  function sanitise(){
+    let f = parseNumber(forceN, 0);
+    if(!Number.isFinite(f)) f = 0;
+    forceN.value = f.toFixed(3);
+  }
+  forceN.addEventListener('change', sanitise);
+  // Main loop
+  let last = performance.now();
+  function loop(now){
+    const dt = clamp((now - last) / 1000, 0, 0.05);
+    last = now;
+
+    try {
+      if(running && !evaporated){
+        step(dt);
+      } else {
+        // Still update the maths display even when paused
+        const F = parseNumber(forceN, 0);
+        const m = MASS_KG;
+        const a = F / m;
+        // Keep time pill truthful even when paused
+        pillTime.textContent = `t = ${t.toFixed(2)} s`;
+    pillA.textContent = `a = ${fmt(a)} m/s²`;
+    pillV.textContent = `v = ${fmt(v)} m/s`;
+    pillX.textContent = `x = ${fmt(x)} m`;
+        }
+
+      render();
+
+      // Decay edge-flash smoothly
+      if (typeof edgeFlashIntensity === 'number') {
+        edgeFlashIntensity = Math.max(0, edgeFlashIntensity - dt * 3.2); // ~0.3s fade
+        if (typeof edgeFlash !== 'undefined' && edgeFlash) {
+          edgeFlash.style.opacity = String(clamp(edgeFlashIntensity, 0, 1));
+        }
+      }
+    } catch (e) {
+      // If something goes wrong, don't silently freeze the whole sim.
+      console.error(e);
+      if (!fatalErrorShown) {
+        fatalErrorShown = true;
+        showToast(`<strong>JavaScript error:</strong> ${e.message}`, 'danger');
+      }
+      running = false;
+      playPause.textContent = 'Play';
+      updateBadge('paused');
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // Initialise
+  resize();
+  updateBadge('paused');
+  sanitise();
+  resetProgrammePlayback();
+  playPause.textContent = 'Play';
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
